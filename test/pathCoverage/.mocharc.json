@@ -1,0 +1,12 @@
+{
+  "spec": "test/pathCoverage/*.spec.js",
+  "require": "test/pathCoverage/support/globalSetup.js",
+  "timeout": 10000,
+  "reporter": "mochawesome",
+  "reporter-option": [
+    "reportDir=test/pathCoverage/report",
+    "reportFilename=path-coverage-report",
+    "json=true",
+    "html=true"
+  ]
+}
