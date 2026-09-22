@@ -1,0 +1,202 @@
+openapi: 3.0.3
+info:
+  title: E-commerce Checkout API
+  description: REST API for login, registration, and checkout with JWT authentication.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api
+paths:
+  /healthcheck:
+    get:
+      summary: Health check
+      tags:
+        - Health
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  uptime:
+                    type: number
+                  timestamp:
+                    type: string
+                    format: date-time
+  /auth/register:
+    post:
+      summary: Register a new user
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Missing required fields
+        '409':
+          description: Email already registered
+  /auth/login:
+    post:
+      summary: Login and receive a JWT token
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Missing required fields
+        '401':
+          description: Invalid credentials
+  /checkout:
+    post:
+      summary: Perform a checkout
+      description: Requires a valid JWT Bearer token. Cash payments get a 10% discount.
+      tags:
+        - Checkout
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckoutRequest'
+      responses:
+        '200':
+          description: Order summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckoutResponse'
+        '400':
+          description: Invalid checkout payload
+        '401':
+          description: Missing or invalid token
+        '404':
+          description: Product not found
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+          example: Jane Doe
+        email:
+          type: string
+          format: email
+          example: jane@example.com
+        password:
+          type: string
+          format: password
+          example: Passw0rd!
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 4
+        name:
+          type: string
+          example: Jane Doe
+        email:
+          type: string
+          example: jane@example.com
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: alice@example.com
+        password:
+          type: string
+          format: password
+          example: Passw0rd!
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+    CheckoutRequest:
+      type: object
+      required: [items, paymentMethod]
+      properties:
+        paymentMethod:
+          type: string
+          enum: [cash, credit_card]
+          example: cash
+        items:
+          type: array
+          items:
+            type: object
+            required: [productId, quantity]
+            properties:
+              productId:
+                type: integer
+                example: 1
+              quantity:
+                type: integer
+                example: 2
+    CheckoutResponse:
+      type: object
+      properties:
+        paymentMethod:
+          type: string
+          example: cash
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              productId:
+                type: integer
+              name:
+                type: string
+              unitPrice:
+                type: number
+              quantity:
+                type: integer
+              subtotal:
+                type: number
+        subtotal:
+          type: number
+          example: 100.0
+        discount:
+          type: number
+          example: 10.0
+        total:
+          type: number
+          example: 90.0
